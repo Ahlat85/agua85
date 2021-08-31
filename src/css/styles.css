@@ -1,1 +1,9 @@
-.var_dump {}
+.var_dump {
+  border: .5px black solid;
+  margin: 2px;
+  padding: 1px;
+}
+
+.var_dump .boolean {
+  color: #8000ff;
+}
