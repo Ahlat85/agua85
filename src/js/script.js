@@ -1,55 +1,6 @@
 const agua85 = {
-  init: () => {
-    const styles = [
-      ["https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css", "bootstrap"]
-    ];
-    const scripts = [
-      ["https://code.jquery.com/jquery-3.6.0.js", "jquery"]
-    ];
-    
-    styles.forEach(e => agua85.css.load(e[1], e[0]));
-    
-    scripts.forEach(e => agua85.js.load(e[1], e[0]));
-  },
-  css: {
-    load: (name, src) => {
-      const data = agua85.str_to_html(`<link style-name="${name}" rel="stylesheet" href="${src}">`);
-      document.getElementsByTagName("head")[0].append(data);
-    },
-    get: (name=undefined) => {
-      if (name) {
-        return $(`link[style-name=${name}]`);
-      } else {
-        return $(`link`);
-      }
-    }
-  },
-  js: {
-    load: (name, src) => {
-      const data = agua85.str_to_html(`<script script-name="${name}" src=${src}"></script>`);
-      document.getElementsByTagName("body")[0].append(data);
-    },
-    get: (name=undefined) => {
-      if (name) {
-        return $(`script[script-name=${name}]`);
-      } else {
-        return $(`script`);
-      }
-    }
-  },
-  str_to_html: str => {
-    const div = document.createElement("div");
-    const data = document.createDocumentFragment();
-    
-    div.innerHTML = str;
-    let i;
-    while (i=div.firstChild) {
-      data.appendChild(i);
-    }
-    
-    return data;
-  },
   sort_list: list_parent => {
+    alert(list_parent)
     list_parent = $(list_parent);
     const list_items = list_parent.children("li").get();
     list_items.sort((a, b) => {
@@ -60,14 +11,133 @@ const agua85 = {
     });
   },
   sort_lists: lists_parent => {
+    lists_parent = $(lists_parent);
     if (lists_parent instanceof HTMLUListElement) {
       agua85.sort_list(lists_parent);
       return;
     }
     $.each(lists_parent, (i, e) => {
-      agua85.sort_list(e)
+      agua85.sort_list(e);
     });
+  },
+  repeatString: (str, num) => {
+    let out = "";
+    for (let i = 0; i < num; i++) {
+      out += str;
+    }
+    return out;
+  },
+  // https://stackoverflow.com/questions/603987/what-is-the-javascript-equivalent-of-var-dump-or-print-r-in-php
+  var_dump: (v, howDisplay, recursionLevel) => {
+    howDisplay = (typeof howDisplay === 'undefined') ? "alert": howDisplay;
+    recursionLevel = (typeof recursionLevel !== 'number') ? 0: recursionLevel;
+
+    var vType = typeof v;
+    var out = vType;
+
+    switch (vType) {
+      case "number":
+        /* there is absolutely no way in JS to distinguish 2 from 2.0
+           so 'number' is the best that you can do. The following doesn't work:
+           var er = /^[0-9]+$/;
+           if (!isNaN(v) && v % 1 === 0 && er.test(3.0)) {
+               out = 'int';
+           }
+        */
+        break;
+      case "boolean":
+        out += ": " + v;
+        break;
+      case "string":
+        out += "(" + v.length + '): "' + v + '"';
+        break;
+      case "object":
+        //check if null
+        if (v === null) {
+          out = "null";
+        }
+        //If using jQuery: if ($.isArray(v))
+        //If using IE: if (isArray(v))
+        //this should work for all browsers according to the ECMAScript standard:
+        else if (Object.prototype.toString.call(v) === '[object Array]') {
+          out = 'array(' + v.length + '): {\n';
+          for (var i = 0; i < v.length; i++) {
+            out += agua85.repeatString('   ', recursionLevel) + "   [" + i + "]:  " +
+            agua85.var_dump(v[i], "none", recursionLevel + 1) + "\n";
+          }
+          out += agua85.repeatString('   ', recursionLevel) + "}";
+        } else {
+          //if object
+          let sContents = "{\n";
+          let cnt = 0;
+          for (var member in v) {
+            //No way to know the original data type of member, since JS
+            //always converts it to a string and no other way to parse objects.
+            sContents += agua85.repeatString('   ', recursionLevel) + "   " + member +
+            ":  " + agua85.var_dump(v[member], "none", recursionLevel + 1) + "\n";
+            cnt++;
+          }
+          sContents += agua85.repeatString('   ', recursionLevel) + "}";
+          out += "(" + cnt + "): " + sContents;
+        }
+        break;
+      default:
+        out = v;
+        break;
+    }
+
+    if (howDisplay != "none") {
+      if (howDisplay == "alert") {
+        alert(out);
+      }
+
+      var pre = document.createElement('pre');
+      pre.innerHTML = out;
+      $(howDisplay).append(pre);
+    }
+
+    return out;
   }
+
 }
 
-agua85.init();
+//  https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/repeat
+if (!String.prototype.repeat) {
+  String.prototype.repeat = function(count) {
+    'use strict';
+    if (this == null)
+      throw new TypeError('can\'t convert ' + this + ' to object');
+
+    var str = '' + this;
+    // To convert string to integer.
+    count = +count;
+    // Check NaN
+    if (count != count)
+      count = 0;
+
+    if (count < 0)
+      throw new RangeError('repeat count must be non-negative');
+
+    if (count == Infinity)
+      throw new RangeError('repeat count must be less than infinity');
+
+    count = Math.floor(count);
+    if (str.length == 0 || count == 0)
+      return '';
+
+    // Ensuring count is a 31-bit integer allows us to heavily optimize the
+    // main part. But anyway, most current (August 2014) browsers can't handle
+    // strings 1 << 28 chars or longer, so:
+    if (str.length * count >= 1 << 28)
+      throw new RangeError('repeat count must not overflow maximum string size');
+
+    var maxCount = str.length * count;
+    count = Math.floor(Math.log(count) / Math.log(2));
+    while (count) {
+      str += str;
+      count--;
+    }
+    str += str.substring(0, maxCount - str.length);
+    return str;
+  }
+}
