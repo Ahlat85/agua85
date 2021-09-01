@@ -9,7 +9,6 @@ const agua85 = {
     return result;
   },
   sort_list: list_parent => {
-    alert(list_parent)
     list_parent = $(list_parent);
     const list_items = list_parent.children("li").get();
     list_items.sort((a, b) => {
